@@ -17,7 +17,15 @@ async function getHotelsService(userId: number) {
   return result;
 }
 
-async function getHotelsRoomsService(hotelId: number) {
+async function getHotelsRoomsService(hotelId: number, userId: number) {
+  const enroll = await enrollmentRepository.findByUserId(userId);
+  if (!enroll) {
+    throw notFoundError();
+  }
+  const ticket = await ticketRepository.findTicketByEnrollmentId(enroll.id);
+  if (!ticket) throw notFoundError();
+  if (ticket.status === "RESERVED" ) throw paymentRequired();
+  if(!ticket.TicketType.includesHotel || ticket.TicketType.isRemote) throw paymentRequired();
   const result = await hotelRepository.findHotelsRoomsById(hotelId);
 
   if (!result) {
